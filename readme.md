@@ -63,30 +63,30 @@ resultados
 ### Funcionalidades
 **Limpeza de Resultados Antigos**: O script remove automaticamente os relatórios mais antigos, mantendo apenas o mais recente para cada domínio.
 
-**Execução Paralela**: O script utiliza 'worker_threads' para executar múltiplas análises em paralelo, com um limite configurável de concorrência.
+**Execução Paralela**: O script utiliza `'worker_threads'` para executar múltiplas análises em paralelo, com um limite configurável de concorrência.
 
 **Busca de Domínios**: Funções para buscar domínios por ID ou URL no ficheiro JSON:
-- 'buscaDominioID(id, FICHEIRO_JSON)'
-- 'buscaDominioURL(url, FICHEIRO_JSON)'
+- `'buscaDominioID(id, FICHEIRO_JSON)'`
+- `'buscaDominioURL(url, FICHEIRO_JSON)'`
 
 ### Configurações
-As configurações principais estão definidas no ficheiro 'main.js':
+As configurações principais estão definidas no ficheiro `'main.js'`:
 
-**FICHEIRO_JSON**: Nome do ficheiro JSON com a lista de websites.
-**RESULTADOS_DIR**: Diretório onde os resultados serão armazenados.
-**CONCURRENCY_LIMIT**: Número máximo de URLs processadas simultaneamente.
+- **FICHEIRO_JSON**: Nome do ficheiro JSON com a lista de websites.
+- **RESULTADOS_DIR**: Diretório onde os resultados serão armazenados.
+- **CONCURRENCY_LIMIT**: Número máximo de URLs processadas simultaneamente.
 
 ### Debug e Logs
 Mensagens de erro e logs são exibidos no terminal para facilitar o debug.
-Mensagens de sucesso ou falha são enviadas pelos workers utilizando 'parentPort.postMessage'.
+Mensagens de sucesso ou falha são enviadas pelos workers utilizando `'parentPort.postMessage'`.
 
 ### Dependências
 O projeto utiliza os seguintes módulos:
 
-'fs' e 'path' para manipulação de ficheiros e diretórios.
-'worker_threads' para execução paralela.
-'perf_hooks' para medir o tempo de execução.
-'readline' para interações no terminal.
+- `'fs'` e `'path'` para manipulação de ficheiros e diretórios.
+- `'worker_threads'` para execução paralela.
+- `'perf_hooks'` para medir o tempo de execução.
+- `'readline'` para interações no terminal.
 
 ### Contribuição
 Sinta-se à vontade para contribuir com melhorias ou novas funcionalidades. Envie um pull request ou reporte problemas no repositório.
