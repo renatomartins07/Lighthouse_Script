@@ -9,10 +9,13 @@ Antes de executar o script, certifique-se de que possui os seguintes requisitos:
 - **Node.js** instalado no sistema.
 - **Lighthouse** instalado globalmente. Pode instalá-lo com o comando:
   `npm install -g lighthouse`
-- Um ficheiro JSON chamado ActiveWebsitesList.json no mesmo diretório do script
+- Um ficheiro JSON chamado `ActiveWebsitesList.json` no mesmo diretório do script.
 
 ### Estrutura do Ficheiro JSON
+
 O ficheiro JSON deve seguir o seguinte formato:
+
+```json
 [
     {
         "ID": 105,
@@ -25,6 +28,8 @@ O ficheiro JSON deve seguir o seguinte formato:
         "DateUpdated": "2019-02-06 11:35:35"
     }
 ]
+```
+
 Cada entrada no JSON representa um website a ser analisado.
 
 ### Como Executar
