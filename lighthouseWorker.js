@@ -18,8 +18,7 @@ function removeBase64Images(obj) {
     const { url, domain, resultadosDir, data } = workerData;
     const outputDir = path.join(resultadosDir, domain, data);
     const outputBase = path.join(outputDir, 'report');
-    const outputHtml = `${outputBase}.html`;
-    const outputJson = `${outputBase}.json`;
+    const outputJson = `${outputBase}.report.json`;
 
     try {
         // Verifica se a pasta de resultados existe

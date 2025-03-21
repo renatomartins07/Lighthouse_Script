@@ -56,7 +56,7 @@ function limpaResultadosAntigos(domainToClean = null) {
 function runLighthouseWorker(url, domain) {
     return new Promise((resolve, reject) => {
         console.log(`A começar o Lighthouse para ${url}`); // Debug
-        console.log('Caso queira parar a execução, pressione CTRL + C'); // Debug
+        console.log('Caso queira parar a execução, pressione CTRL + C'); 
 
         // Cria um novo worker
         const worker = new Worker('./lighthouseWorker.js', {
@@ -77,7 +77,6 @@ function runLighthouseWorker(url, domain) {
         });
 
         worker.on('exit', (code) => {
-            console.log(`Worker saiu do ${url} com código ${code}`); // Debug
             if (code !== 0) {
                 reject(new Error(`Worker finalizou com código ${code}`));
             }
@@ -112,7 +111,9 @@ async function main() {
         const promise = runLighthouseWorker(url, InternalDomain)
             .then(() => {
                 UrlsAnalisadas++; 
-                console.log(`${UrlsAnalisadas}/${totalUrls} URLs processadas`); 
+                console.log('-----------------------------------------------');
+                console.log(`|${UrlsAnalisadas}/${totalUrls} URLs processadas`); 
+                console.log('-----------------------------------------------');
             })
             .catch((error) => { 
                 errors.push(error.message); 
@@ -192,13 +193,6 @@ function menu(){
                             const tempoTotal = Math.round((endTime - startTime) * 0.001);
                             console.log(`Tempo total de execução: ${tempoTotal} segundos`);
                         })
-                        .catch(() => {
-                            openExplorer(`C:\\Users\\renato.martins\\Lighthouse_Script\\resultados\\${dominio}\\${DATA}`);
-                            const endTime = performance.now(); // Tempo de execução
-                            const tempoTotal = Math.round((endTime - startTime) * 0.001);
-                            console.log(`Tempo total de execução: ${tempoTotal} segundos`);
-
-                        })
                     } catch (error) {
                         console.error(`Erro ao executar o Lighthouse para o domínio ${dominio}:`, error.message);
                     }
@@ -219,9 +213,13 @@ function menu(){
                     limpaResultadosAntigos(dominio); // Limpa resultados antigos apenas para o domínio específico
                     
                     try {
+                        const startTime = performance.now(); // Tempo de execução
                         runLighthouseWorker(`https://${dominio}`, dominio)
-                        .catch(() => {
+                        .then(() => {
                             openExplorer(`C:\\Users\\renato.martins\\Lighthouse_Script\\resultados\\${dominio}\\${DATA}`);
+                            const endTime = performance.now(); // Tempo de execução
+                            const tempoTotal = Math.round((endTime - startTime) * 0.001);
+                            console.log(`Tempo total de execução: ${tempoTotal} segundos`);
                         })
                     } catch (error) {
                         console.error(`Erro ao executar o Lighthouse para o domínio ${dominio}:`, error.message);
