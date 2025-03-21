@@ -90,6 +90,8 @@ async function main() {
     let tempoTotal = 0;
     const errors = [];
 
+    console.log('A iniciar o processo em 3 segundos...');
+    await new Promise(resolve => setTimeout(resolve, 3000)); // Delay de 3 segundos
     limpaResultadosAntigos(); // Limpa resultados antigos
 
     const jsonData = carregarJSONData(FICHEIRO_JSON); // Carrega o JSON
@@ -112,7 +114,7 @@ async function main() {
             .then(() => {
                 UrlsAnalisadas++; 
                 console.log('-----------------------------------------------');
-                console.log(`|${UrlsAnalisadas}/${totalUrls} URLs processadas`); 
+                console.log(`${UrlsAnalisadas}/${totalUrls} URLs processadas`); 
                 console.log('-----------------------------------------------');
             })
             .catch((error) => { 
@@ -120,7 +122,7 @@ async function main() {
                 console.error(error.message); 
                 UrlsAnalisadas++; 
                 console.log('-----------------------------------------------');
-                console.log(`|${UrlsAnalisadas}/${totalUrls} URLs processadas`); 
+                console.log(`${UrlsAnalisadas}/${totalUrls} URLs processadas`); 
                 console.log('-----------------------------------------------');
             })
             .finally(() => {
