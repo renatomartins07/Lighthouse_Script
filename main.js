@@ -4,6 +4,8 @@ const path = require('path');
 const { performance } = require('perf_hooks');
 const readline = require('readline');
 const { openExplorer } = require ('explorer-opener');
+const green = "\x1b[32m";
+const reset = "\x1b[0m";
 
 // Bibliotecas locais
 const { carregarJSONData } = require('./scripts/JsonHelper');
@@ -182,7 +184,21 @@ function menu(){
 
                     limpaResultadosAntigos(dominio); // Limpa resultados antigos
                     try {
+                        const startTime = performance.now(); // Tempo de execução
                         runLighthouseWorker(`https://${dominio}`, dominio)
+                        .then(() => {
+                            openExplorer(`C:\\Users\\renato.martins\\Lighthouse_Script\\resultados\\${dominio}\\${DATA}`);
+                            const endTime = performance.now(); // Tempo de execução
+                            const tempoTotal = Math.round((endTime - startTime) * 0.001);
+                            console.log(`Tempo total de execução: ${tempoTotal} segundos`);
+                        })
+                        .catch(() => {
+                            openExplorer(`C:\\Users\\renato.martins\\Lighthouse_Script\\resultados\\${dominio}\\${DATA}`);
+                            const endTime = performance.now(); // Tempo de execução
+                            const tempoTotal = Math.round((endTime - startTime) * 0.001);
+                            console.log(`Tempo total de execução: ${tempoTotal} segundos`);
+
+                        })
                     } catch (error) {
                         console.error(`Erro ao executar o Lighthouse para o domínio ${dominio}:`, error.message);
                     }
@@ -203,7 +219,10 @@ function menu(){
                     limpaResultadosAntigos(dominio); // Limpa resultados antigos apenas para o domínio específico
                     
                     try {
-                        runLighthouseWorker(`https://${dominio}`, dominio);
+                        runLighthouseWorker(`https://${dominio}`, dominio)
+                        .catch(() => {
+                            openExplorer(`C:\\Users\\renato.martins\\Lighthouse_Script\\resultados\\${dominio}\\${DATA}`);
+                        })
                     } catch (error) {
                         console.error(`Erro ao executar o Lighthouse para o domínio ${dominio}:`, error.message);
                     }
@@ -223,5 +242,7 @@ function menu(){
         }while(!regex.test(op));
     });    
 }
-
+console.log(green);
+console.log('Bem-vindo ao Lighthouse Script!');
 menu();
+console.log(reset);

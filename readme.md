@@ -7,10 +7,8 @@ Este script executa o Lighthouse para cada URL listada no ficheiro JSON e guarda
 Antes de executar o script, certifique-se de que possui os seguintes requisitos:
 
 - **Node.js** instalado no sistema.
-- **Lighthouse** instalado globalmente. Pode instalá-lo com o comando:
-  `npm install -g lighthouse`
-- **Explorer-Opener** instalado globalmente. Pode instalálo com o comando:
-  `npm i explorer-opener`
+- **Lighthouse** instalado globalmente. Pode instalá-lo com o comando: `npm install -g lighthouse`
+- **Explorer-Opener** instalado globalmente. Pode instalá-lo com o comando:`npm i explorer-opener`
 - Um ficheiro JSON chamado `ActiveWebsitesList.json` no mesmo diretório do script.
 
 ### Estrutura do Ficheiro JSON
