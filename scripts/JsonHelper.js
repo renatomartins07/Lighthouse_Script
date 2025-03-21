@@ -24,4 +24,4 @@ function carregarJSONData(filePath){
     }
 }
 
-module.exports = { carregarJSONData };
+module.exports = { carregarJSONData, lerJSON };

@@ -15,7 +15,7 @@ const DATA = new Date().toISOString().replace('T', '-').replace(/:/g, '-').split
 const CONCURRENCY_LIMIT = 5; // Corre 5 URLs em simultâneo
 
 // Funcao para limpar resultados antigos
-function limpaResultadosAntigos() {
+function limpaResultadosAntigos(domainToClean = null) {
     // Cria a pasta de resultados se não existir
     if (!fs.existsSync(RESULTADOS_DIR)) {
         fs.mkdirSync(RESULTADOS_DIR, { recursive: true });
@@ -25,8 +25,10 @@ function limpaResultadosAntigos() {
     console.log('Verificando resultados antigos...');
     const domains = fs.readdirSync(RESULTADOS_DIR); // Lista de domínios
 
-    // Verifica se existem mais de 1 data para cada domínio e apaga a mais antiga
-    domains.forEach(domain => {
+    // Filtra apenas o domínio específico, se fornecido
+    const filteredDomains = domainToClean ? [domainToClean] : domains;
+
+    filteredDomains.forEach(domain => {
         const domainPath = path.join(RESULTADOS_DIR, domain);
         if (fs.statSync(domainPath).isDirectory()) {
             const dates = fs.readdirSync(domainPath);
@@ -138,7 +140,13 @@ async function main() {
 function menu(){
     let op = '';
     let dominio = '';
-    const text = ' ---------------------------------------------\n| Menu                                        |\n| 1 - Correr todos os domínios                |\n| 2 - Correr um domínio (Por ID)              |\n| 3 - Correr um domínio (Por URL)             |\n| 4 - Sair                                    |\n ---------------------------------------------';
+    const text = ' ---------------------------------------------\n' 
+               + '| Menu\t\t\t\t\t      |\n'
+               + '| 1 - Correr todos os domínios\t\t      |\n'
+               + '| 2 - Correr um domínio (Por ID)\t      |\n'
+               + '| 3 - Correr um domínio (Por URL)\t      |\n'
+               + '| 4 - Sair\t\t\t\t      |\n'
+               + ' ---------------------------------------------';
     const regex = new RegExp('^[1-4]$');
     const rl = readline.createInterface({
         input: process.stdin,
@@ -165,9 +173,9 @@ function menu(){
                 rl.question('Insira o ID do site: ', ans => {
                     dominio = buscaDominioID(ans, FICHEIRO_JSON);
 
-                    console.log(`A correr o Lighthouse para o domínio: ${dominio}`);
+                    limpaResultadosAntigos(dominio); // Limpa resultados antigos
                     try {
-                        runLighthouseWorker(`https://${dominio}`, dominio);
+                        runLighthouseWorker(`https://${dominio}`, dominio)
                     } catch (error) {
                         console.error(`Erro ao executar o Lighthouse para o domínio ${dominio}:`, error.message);
                     }
@@ -178,7 +186,15 @@ function menu(){
             if(op === '3'){
                 rl.question('Insira a URL do site: ', ans => {
                     dominio = buscaDominioURL(ans, FICHEIRO_JSON);
-                    console.log(`A correr o Lighthouse para o domínio: ${dominio}`);
+
+                    if (!dominio) {
+                        console.error('Domínio não encontrado.');
+                        rl.close();
+                        return;
+                    }
+
+                    limpaResultadosAntigos(dominio); // Limpa resultados antigos apenas para o domínio específico
+                    
                     try {
                         runLighthouseWorker(`https://${dominio}`, dominio);
                     } catch (error) {
@@ -194,8 +210,8 @@ function menu(){
             }
     
             if(!regex.test(op)){
-                console.clear();
                 console.log('Opção inválida!');
+                process.exit(0);
             }
         }while(!regex.test(op));
     });    

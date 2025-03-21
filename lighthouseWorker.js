@@ -36,7 +36,7 @@ function removeBase64Images(obj) {
 
         parentPort.postMessage({ success: true }); //Manda mensagem de sucesso
     } catch (error) {
-        console.error(`Worker failed for ${url}: ${error.message}`); // Debug log
+        console.error(`Worker falhou no ${url}: ${error.message}`); // Debug log
         parentPort.postMessage({ success: false, error: error.message }); // Manda mensagem de erro
     }
 })();
