@@ -3,6 +3,9 @@ const fs = require('fs');
 const path = require('path');
 const { performance } = require('perf_hooks');
 const readline = require('readline');
+const { openExplorer } = require ('explorer-opener');
+
+// Bibliotecas locais
 const { carregarJSONData } = require('./scripts/JsonHelper');
 const { buscaDominioID, buscaDominioURL } = require('./scripts/buscaDominio');
 
@@ -134,7 +137,11 @@ async function main() {
         errors.forEach((error) => console.log(`- ${error}`));
     }
 
+    console.log('-----------------------------------------------');
+    console.log(`|${UrlsAnalisadas}/${totalUrls} URLs processadas`); 
+    console.log('-----------------------------------------------');
     console.log(`Tempo total de execução: ${tempoTotal} segundos/${Math.round(tempoTotal / 60)} minuto(s)`);
+    openExplorer('C:\\Users\\renato.martins\\Lighthouse_Script\\resultados');
 }
 
 function menu(){
