@@ -10,6 +10,7 @@ const reset = "\x1b[0m";
 // Bibliotecas locais
 const { carregarJSONData } = require('./scripts/JsonHelper');
 const { buscaDominioID, buscaDominioURL } = require('./scripts/buscaDominio');
+const { ordenarPastasPorPontuacaoSeo } = require('./scripts/pontuacao');
 
 
 // Configuração
@@ -24,22 +25,45 @@ function limpaResultadosAntigos(domainToClean = null) {
     // Cria a pasta de resultados se não existir
     if (!fs.existsSync(RESULTADOS_DIR)) {
         fs.mkdirSync(RESULTADOS_DIR, { recursive: true });
+        console.log(`Criada a pasta de resultados: ${RESULTADOS_DIR}`);
         return;
     }
 
     console.log('Verificando resultados antigos...');
-    const domains = fs.readdirSync(RESULTADOS_DIR); // Lista de domínios
 
-    // Filtra apenas o domínio específico, se fornecido
-    const filteredDomains = domainToClean ? [domainToClean] : domains;
+    // Itera sobre as pastas de faixas (e.g., 0-39, 40-59, etc.)
+    const rangeDirs = fs.readdirSync(RESULTADOS_DIR).filter(rangeDir => {
+        const rangePath = path.join(RESULTADOS_DIR, rangeDir);
+        return fs.statSync(rangePath).isDirectory();
+    });
 
-    filteredDomains.forEach(domain => {
-        const domainPath = path.join(RESULTADOS_DIR, domain);
-        if (fs.statSync(domainPath).isDirectory()) {
-            const dates = fs.readdirSync(domainPath);
+    rangeDirs.forEach(rangeDir => {
+        const rangePath = path.join(RESULTADOS_DIR, rangeDir);
+
+        // Itera sobre os domínios dentro da faixa
+        const domains = fs.readdirSync(rangePath).filter(domain => {
+            const domainPath = path.join(rangePath, domain);
+            return fs.statSync(domainPath).isDirectory();
+        });
+
+        // Filtra os domínios se um domínio específico for fornecido
+        const filteredDomains = domainToClean
+            ? domains.filter(domain => domain === domainToClean)
+            : domains;
+
+        filteredDomains.forEach(domain => {
+            const domainPath = path.join(rangePath, domain);
+
+            // Obtém todas as pastas de datas dentro do domínio
+            const dates = fs.readdirSync(domainPath).filter(date => {
+                const datePath = path.join(domainPath, date);
+                return fs.statSync(datePath).isDirectory();
+            });
+
             if (dates.length > 1) {
+                // Ordena as datas e mantém apenas a mais recente e a que será criada
                 const sortedDates = dates.sort((a, b) => new Date(a) - new Date(b));
-                const datesToDelete = sortedDates.slice(0, -1);
+                const datesToDelete = sortedDates.slice(0, -1); // Mantém a mais recente
 
                 datesToDelete.forEach(date => {
                     const datePath = path.join(domainPath, date);
@@ -47,7 +71,7 @@ function limpaResultadosAntigos(domainToClean = null) {
                     console.log(`Apagado: ${datePath}`);
                 });
             }
-        }
+        });
     });
 }
 
@@ -137,13 +161,15 @@ async function main() {
     const endTime = performance.now(); // Tempo de execução
     tempoTotal = Math.round((endTime - startTime) * 0.001);
 
+    ordenarPastasPorPontuacaoSeo(RESULTADOS_DIR); // Ordena pastas por pontuação SEO
+
     if (errors.length > 0) {
         console.log('Erros encontrados:');
         errors.forEach((error) => console.log(`- ${error}`));
     }
 
     console.log('-----------------------------------------------');
-    console.log(`|${UrlsAnalisadas}/${totalUrls} URLs processadas`); 
+    console.log(`${UrlsAnalisadas}/${totalUrls} URLs processadas`); 
     console.log('-----------------------------------------------');
     console.log(`Tempo total de execução: ${tempoTotal} segundos/${Math.round(tempoTotal / 60)} minuto(s)`);
     openExplorer('C:\\Users\\renato.martins\\Lighthouse_Script\\resultados');
@@ -242,6 +268,7 @@ function menu(){
         }while(!regex.test(op));
     });    
 }
+
 console.log(green);
 console.log('Bem-vindo ao Lighthouse Script!');
 menu();
