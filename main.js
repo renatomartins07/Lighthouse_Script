@@ -284,7 +284,6 @@ function menu(){
 }
 console.clear();
 console.log(green);
-console.log('__dirname:', __dirname);
 console.log('Bem-vindo ao Lighthouse Script!');
 menu();
 console.log(reset);
