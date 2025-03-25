@@ -12,13 +12,110 @@ const { carregarJSONData } = require('./scripts/JsonHelper');
 const { buscaDominioID, buscaDominioURL } = require('./scripts/buscaDominio');
 const { ordenarPastasPorPontuacaoSeo } = require('./scripts/pontuacao');
 
-
 // Configuração
 const FICHEIRO_JSON = 'ActiveWebsitesList.json';
-exports.FICHEIRO_JSON = FICHEIRO_JSON;
+exports.FICHEIRO_JSON = FICHEIRO_JSON; // Exporta o ficheiro JSON para ser usado em outros ficheiros
 const RESULTADOS_DIR = 'resultados';
 const DATA = new Date().toISOString().replace('T', '-').replace(/:/g, '-').split('.')[0]; // Formato: YYYY-MM-DD-HH-mm-ss
 const CONCURRENCY_LIMIT = 5; // Corre 5 URLs em simultâneo
+
+
+// Funcao para correr o Lighthouse
+function runLighthouseWorker(url, domain) {
+    return new Promise((resolve, reject) => {
+        console.log(`A começar o Lighthouse para ${url}`); // Debug
+        console.log('Caso queira parar a execução, pressione CTRL + C'); 
+
+        // Cria um novo worker
+        const worker = new Worker('./lighthouseWorker.js', {
+            workerData: { url, domain, resultadosDir: RESULTADOS_DIR, data: DATA }, // Passa os dados para o worker
+        });
+
+        worker.on('message', (message) => {
+            if (message.success) {
+                resolve(message);
+            } else {
+                reject(new Error(`Erro no domínio ${domain}: ${message.error}`));
+            }
+        });
+
+        worker.on('error', (error) => {
+            console.error(`Worker error for ${url}:`, error); // Debug
+            reject(error);
+        });
+
+        worker.on('exit', (code) => {
+            if (code !== 0) {
+                reject(new Error(`Worker finalizou com código ${code}`));
+            }
+        });
+    });
+}
+
+
+async function correrDominios(){
+    let UrlsAnalisadas = 0;
+    let totalUrls = 0;
+    let tempoTotal = 0;
+    const errors = [];
+    
+    const jsonData = carregarJSONData(FICHEIRO_JSON); // Carrega o JSON
+    totalUrls = jsonData.filter(item => item.InternalDomain).length; // Conta o número de URLs
+    if (!jsonData) return; // Sai se não conseguir carregar o JSON
+
+    // Filtra URLs internas
+    const urls = jsonData.filter(({ InternalDomain }) => InternalDomain);
+    const promises = []; 
+    const startTime = performance.now(); // Tempo de execução
+
+    // Corre o Lighthouse para cada URL
+    for (const { InternalDomain } of urls) {
+        if (promises.length >= CONCURRENCY_LIMIT) {
+            await Promise.race(promises); // Espera que uma promessa termine
+        }
+
+        const url = `https://${InternalDomain}`;
+        const promise = runLighthouseWorker(url, InternalDomain)
+            .then(() => {
+                UrlsAnalisadas++; 
+                console.log('-----------------------------------------------');
+                console.log(`${UrlsAnalisadas}/${totalUrls} URLs processadas`); 
+                console.log('-----------------------------------------------');
+            })
+            .catch((error) => { 
+                errors.push(error.message); 
+                console.error(error.message); 
+                UrlsAnalisadas++; 
+                console.log('-----------------------------------------------');
+                console.log(`${UrlsAnalisadas}/${totalUrls} URLs processadas`); 
+                console.log('-----------------------------------------------');
+            })
+            .finally(() => {
+                promises.splice(promises.indexOf(promise), 1); // Remove a promessa do array
+            });
+
+        promises.push(promise); // Adiciona a promessa ao array
+    }
+    
+    await Promise.all(promises); // Espera que todas as promessas terminem
+
+    const endTime = performance.now(); // Tempo de execução
+    tempoTotal = Math.round((endTime - startTime) * 0.001);
+
+    ordenarPastasPorPontuacaoSeo(RESULTADOS_DIR); // Ordena pastas por pontuação SEO
+
+    if (errors.length > 0) {
+        console.log('Erros encontrados:');
+        errors.forEach((error) => console.log(`- ${error}`));
+    }
+
+    console.log('-----------------------------------------------');
+    console.log(`${UrlsAnalisadas}/${totalUrls} URLs processadas`); 
+    console.log('-----------------------------------------------');
+    console.log(`Tempo total de execução: ${tempoTotal} segundos/${Math.round(tempoTotal / 60)} minuto(s)`);
+    openExplorer(`${__dirname}\\resultados`);
+}
+
 
 // Funcao para limpar resultados antigos
 function limpaResultadosAntigos(domainToClean = null) {
@@ -90,104 +187,25 @@ function limpaResultadosAntigos(domainToClean = null) {
 }
 
 
-// Funcao para correr o Lighthouse
-function runLighthouseWorker(url, domain) {
-    return new Promise((resolve, reject) => {
-        console.log(`A começar o Lighthouse para ${url}`); // Debug
-        console.log('Caso queira parar a execução, pressione CTRL + C'); 
-
-        // Cria um novo worker
-        const worker = new Worker('./lighthouseWorker.js', {
-            workerData: { url, domain, resultadosDir: RESULTADOS_DIR, data: DATA }, // Passa os dados para o worker
-        });
-
-        worker.on('message', (message) => {
-            if (message.success) {
-                resolve(message);
-            } else {
-                reject(new Error(`Erro no domínio ${domain}: ${message.error}`));
-            }
-        });
-
-        worker.on('error', (error) => {
-            console.error(`Worker error for ${url}:`, error); // Debug
-            reject(error);
-        });
-
-        worker.on('exit', (code) => {
-            if (code !== 0) {
-                reject(new Error(`Worker finalizou com código ${code}`));
-            }
-        });
-    });
+function correrDominioUnico(dominio){
+    try {
+        const startTime = performance.now(); // Tempo de execução
+        runLighthouseWorker(`https://${dominio}`, dominio)
+        .then(() => {
+            openExplorer(`${__dirname}\\resultados\\${dominio}\\${DATA}`);
+            const endTime = performance.now(); // Tempo de execução
+            const tempoTotal = Math.round((endTime - startTime) * 0.001);
+            
+            console.log('\n--------------------------------------------------------------------------------');
+            console.log('Domínio processado com sucesso! Por favor extraia a pasta para outro local.');
+            console.log('--------------------------------------------------------------------------------');
+            console.log(`Tempo total de execução: ${tempoTotal} segundos/${Math.round(tempoTotal / 60)} minuto(s)`);
+        })
+    } catch (error) {
+        console.error(`Erro ao executar o Lighthouse para o domínio ${dominio}:`, error.message);
+    }
 }
 
-async function main() {
-    let UrlsAnalisadas = 0;
-    let totalUrls = 0;
-    let tempoTotal = 0;
-    const errors = [];
-
-    console.log('A iniciar o processo em 3 segundos...');
-    await new Promise(resolve => setTimeout(resolve, 3000)); // Delay de 3 segundos
-    limpaResultadosAntigos(); // Limpa resultados antigos
-
-    const jsonData = carregarJSONData(FICHEIRO_JSON); // Carrega o JSON
-    totalUrls = jsonData.filter(item => item.InternalDomain).length; // Conta o número de URLs
-    if (!jsonData) return; // Sai se não conseguir carregar o JSON
-
-    // Filtra URLs internas
-    const urls = jsonData.filter(({ InternalDomain }) => InternalDomain);
-    const promises = []; 
-    const startTime = performance.now(); // Tempo de execução
-
-    // Corre o Lighthouse para cada URL
-    for (const { InternalDomain } of urls) { 
-        if (promises.length >= CONCURRENCY_LIMIT) {
-            await Promise.race(promises); // Espera que uma promessa termine
-        }
-
-        const url = `https://${InternalDomain}`;
-        const promise = runLighthouseWorker(url, InternalDomain)
-            .then(() => {
-                UrlsAnalisadas++; 
-                console.log('-----------------------------------------------');
-                console.log(`${UrlsAnalisadas}/${totalUrls} URLs processadas`); 
-                console.log('-----------------------------------------------');
-            })
-            .catch((error) => { 
-                errors.push(error.message); 
-                console.error(error.message); 
-                UrlsAnalisadas++; 
-                console.log('-----------------------------------------------');
-                console.log(`${UrlsAnalisadas}/${totalUrls} URLs processadas`); 
-                console.log('-----------------------------------------------');
-            })
-            .finally(() => {
-                promises.splice(promises.indexOf(promise), 1); // Remove a promessa do array
-            });
-
-        promises.push(promise); // Adiciona a promessa ao array
-    }
-    
-    await Promise.all(promises); // Espera que todas as promessas terminem
-
-    const endTime = performance.now(); // Tempo de execução
-    tempoTotal = Math.round((endTime - startTime) * 0.001);
-
-    ordenarPastasPorPontuacaoSeo(RESULTADOS_DIR); // Ordena pastas por pontuação SEO
-
-    if (errors.length > 0) {
-        console.log('Erros encontrados:');
-        errors.forEach((error) => console.log(`- ${error}`));
-    }
-
-    console.log('-----------------------------------------------');
-    console.log(`${UrlsAnalisadas}/${totalUrls} URLs processadas`); 
-    console.log('-----------------------------------------------');
-    console.log(`Tempo total de execução: ${tempoTotal} segundos/${Math.round(tempoTotal / 60)} minuto(s)`);
-    openExplorer(`${__dirname}\\resultados`);
-}
 
 function menu(){
     let op = '';
@@ -223,43 +241,20 @@ function menu(){
     
             if(op === '2'){
                 rl.question('Insira o ID do site: ', ans => {
-                    dominio = buscaDominioID(ans, FICHEIRO_JSON);
+                    dominio = buscaDominioID(ans, FICHEIRO_JSON); // Busca o domínio pelo ID
 
                     limpaResultadosAntigos(dominio); // Limpa resultados antigos
-                    try {
-                        const startTime = performance.now(); // Tempo de execução
-                        runLighthouseWorker(`https://${dominio}`, dominio)
-                        .then(() => {
-                            openExplorer(`${__dirname}\\resultados\\${dominio}\\${DATA}`);
-                            const endTime = performance.now(); // Tempo de execução
-                            const tempoTotal = Math.round((endTime - startTime) * 0.001);
-                            console.log(`Tempo total de execução: ${tempoTotal} segundos`);
-                        })
-                    } catch (error) {
-                        console.error(`Erro ao executar o Lighthouse para o domínio ${dominio}:`, error.message);
-                    }
+                    correrDominioUnico(dominio); // Corre o Lighthouse para o domínio específico
                     rl.close();
                 });
             }
     
             if(op === '3'){
                 rl.question('Insira a URL do site: ', ans => {
-                    dominio = buscaDominioURL(ans, FICHEIRO_JSON);
-                    
+                    dominio = buscaDominioURL(ans, FICHEIRO_JSON); // Busca o domínio pelo URL
+
                     limpaResultadosAntigos(dominio); // Limpa resultados antigos apenas para o domínio específico
-                    
-                    try {
-                        const startTime = performance.now(); // Tempo de execução
-                        runLighthouseWorker(`https://${dominio}`, dominio)
-                        .then(() => {
-                            openExplorer(`${__dirname}\\Lighthouse_Script\\resultados\\${dominio}\\${DATA}`);
-                            const endTime = performance.now(); // Tempo de execução
-                            const tempoTotal = Math.round((endTime - startTime) * 0.001);
-                            console.log(`Tempo total de execução: ${tempoTotal} segundos`);
-                        })
-                    } catch (error) {
-                        console.error(`Erro ao executar o Lighthouse para o domínio ${dominio}:`, error.message);
-                    }
+                    correrDominioUnico(dominio); // Corre o Lighthouse para o domínio específico
                     rl.close();
                 });
             }
@@ -277,6 +272,16 @@ function menu(){
         }while(!regex.test(op));
     });    
 }
+
+
+async function main() {
+    console.log('A iniciar o processo em 3 segundos...');
+    await new Promise(resolve => setTimeout(resolve, 3000)); // Delay de 3 segundos
+    limpaResultadosAntigos(); // Limpa resultados antigos
+    correrDominios(); // Corre o Lighthouse para todos os domínios
+}
+
+// Inicia o script
 console.clear();
 console.log(green);
 console.log('Bem-vindo ao Lighthouse Script!');

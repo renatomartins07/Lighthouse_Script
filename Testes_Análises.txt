@@ -1,21 +1,17 @@
 ------------------------------------------------------
 
-Tempo para 3 análises:
-main: 46 segundos
-async: 23 segundos
+Tempo para 5 análises:
+main: ~3 minutos e 18 segundos
 
 ------------------------------------------------------
 
 Tempo para 10 análises:
-main: 6 minutos
-async: 3 minutos
+main: ~3 minutos e 20 segundos
 
 ------------------------------------------------------
 
-Espaço ocupado por 3 análises: 8.25 MB
+Espaço ocupado por 5 análises: 11.3 MB
 Espaço ocupado por 10 análises: 21 MB
-Espaço expectado ser ocupado por 5000 análises: 2.6 GB
+Espaço expectado ser ocupado por 5000 análises: 3.2 GB
 
 ------------------------------------------------------
-
-sasd
