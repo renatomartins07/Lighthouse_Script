@@ -33,10 +33,13 @@ Cada entrada no JSON representa um website a ser analisado.
 ### Como Executar
 Siga os passos abaixo para executar o script:
 
-Certifique-se de que o ficheiro JSON está no formato correto.
-Abra o terminal e navegue até ao diretório onde o script está localizado.
-Execute o comando:
+1. Instale as dependências do projeto: `npm install`
+
+2. Certifique-se de que o ficheiro JSON está no formato correto.
+3. Abra o terminal e navegue até ao diretório onde o script está localizado.
+4. Execute o comando:
 `node main.js`
+Ou utilize o arquivo `run_script.bat` para abrir o terminal automaticamente
 
 Os resultados serão guardados na pasta resultados com a seguinte estrutura:
 [report.html](http://_vscodecontentref_/0)
@@ -47,16 +50,38 @@ Os relatórios gerados pelo Lighthouse serão organizados da seguinte forma:
 - **Domínio**: Cada domínio terá a sua própria pasta.
 - **Data**: Dentro de cada pasta de domínio, os relatórios serão organizados por data e hora de execução.
 - **Relatório**: O ficheiro report.html contém o relatório detalhado da análise do Lighthouse.
+- **Desktop**: relatorio_desktop.report.json e relatorio_desktop.report.html
+- **Mobile**: relatorio_mobile.report.json e relatorio_mobile.report.html
 ```bash
 resultados
-├── 15300-1.ep.egorealestate.com
-│   ├── 2025-03-19-11-31-30
-│   │   └── report.html
-│   └── 2025-03-19-11-32-24
-│       └── report.html
-└── 15394-1.ep.egorealestate.com
-    └── 2025-03-19-11-31-30
-        └── report.html
+├── 0-39                # Pontuação baixa (0 a 39)
+│   ├── exemplo.com     # Nome do domínio
+│       └── 2025-03-25  # Data da execução
+│           ├── relatorio_desktop.report.json
+│           ├── relatorio_desktop.report.html
+│           ├── relatorio_mobile.report.json
+│           └── relatorio_mobile.report.html
+├── 40-59               # Pontuação média-baixa (40 a 59)
+│   ├── exemplo2.com
+│       └── 2025-03-25
+│           ├── relatorio_desktop.report.json
+│           ├── relatorio_desktop.report.html
+│           ├── relatorio_mobile.report.json
+│           └── relatorio_mobile.report.html
+├── 60-89               # Pontuação média-alta (60 a 89)
+│   ├── exemplo3.com
+│       └── 2025-03-25
+│           ├── relatorio_desktop.report.json
+│           ├── relatorio_desktop.report.html
+│           ├── relatorio_mobile.report.json
+│           └── relatorio_mobile.report.html
+├── 90-100              # Pontuação alta (90 a 100)
+│   ├── exemplo4.com
+│       └── 2025-03-25
+│           ├── relatorio_desktop.report.json
+│           ├── relatorio_desktop.report.html
+│           ├── relatorio_mobile.report.json
+│           └── relatorio_mobile.report.html
 ```
 
 ### Funcionalidades
