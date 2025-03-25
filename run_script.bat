@@ -1,4 +1,4 @@
 @echo off
 title Lighthouse Script
-cd /d C:\Users\renato.martins\Lighthouse_Script
+cd /d "%~dp0"
 start cmd /k "node main.js"
