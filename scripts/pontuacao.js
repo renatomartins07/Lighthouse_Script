@@ -101,7 +101,7 @@ function ordenarPastasPorPontuacaoSeo(RESULTADOS_DIR) {
             }
         });
     } catch (error) {
-        console.error(`Erro ao organizar pastas por pontuação SEO: ${error.message}`);
+        console.error(`Erro ao organizar pastas por pontuação SEO: ${error.message} \nSe o erro persistir tente apagar a pasta de resultados e correr o script novamente.`);
     }
 }
 

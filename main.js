@@ -245,13 +245,7 @@ function menu(){
             if(op === '3'){
                 rl.question('Insira a URL do site: ', ans => {
                     dominio = buscaDominioURL(ans, FICHEIRO_JSON);
-
-                    if (!dominio) {
-                        console.error('Domínio não encontrado.');
-                        rl.close();
-                        return;
-                    }
-
+                    
                     limpaResultadosAntigos(dominio); // Limpa resultados antigos apenas para o domínio específico
                     
                     try {
@@ -276,8 +270,9 @@ function menu(){
             }
     
             if(!regex.test(op)){
+                console.clear();
                 console.log('Opção inválida!');
-                process.exit(0);
+                return menu();
             }
         }while(!regex.test(op));
     });    

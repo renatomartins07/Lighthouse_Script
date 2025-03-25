@@ -35,6 +35,7 @@ function buscaDominioURL(url, FICHEIRO_JSON) {
             return dominio.InternalDomain;
         } else {
             console.log(`Domínio com URL ${url} não encontrado.`);
+            process.exit(0);
         }
     } catch (error) {
         console.error(`Erro ao buscar domínio: ${error.message}`);
