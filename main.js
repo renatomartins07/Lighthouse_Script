@@ -31,47 +31,61 @@ function limpaResultadosAntigos(domainToClean = null) {
 
     console.log('Verificando resultados antigos...');
 
-    // Itera sobre as pastas de faixas (e.g., 0-39, 40-59, etc.)
-    const rangeDirs = fs.readdirSync(RESULTADOS_DIR).filter(rangeDir => {
-        const rangePath = path.join(RESULTADOS_DIR, rangeDir);
-        return fs.statSync(rangePath).isDirectory();
+    // Obtém todos os diretórios dentro de "resultados"
+    const allEntries = fs.readdirSync(RESULTADOS_DIR).filter(entry => {
+        const entryPath = path.join(RESULTADOS_DIR, entry);
+        return fs.statSync(entryPath).isDirectory();
     });
 
-    rangeDirs.forEach(rangeDir => {
-        const rangePath = path.join(RESULTADOS_DIR, rangeDir);
+    // Regex para identificar faixas de pontuação (exemplo: "50-60")
+    const faixaRegex = /^\d{1,3}-\d{1,3}$/;
 
-        // Itera sobre os domínios dentro da faixa
-        const domains = fs.readdirSync(rangePath).filter(domain => {
-            const domainPath = path.join(rangePath, domain);
-            return fs.statSync(domainPath).isDirectory();
-        });
+    allEntries.forEach(entry => {
+        const entryPath = path.join(RESULTADOS_DIR, entry);
 
-        // Filtra os domínios se um domínio específico for fornecido
-        const filteredDomains = domainToClean
-            ? domains.filter(domain => domain === domainToClean)
-            : domains;
+        if (faixaRegex.test(entry)) {
+            // Caso seja uma faixa de pontuação
+            const rangePath = entryPath;
 
-        filteredDomains.forEach(domain => {
-            const domainPath = path.join(rangePath, domain);
-
-            // Obtém todas as pastas de datas dentro do domínio
-            const dates = fs.readdirSync(domainPath).filter(date => {
-                const datePath = path.join(domainPath, date);
-                return fs.statSync(datePath).isDirectory();
+            // Renova sobre os domínios dentro da faixa
+            const domains = fs.readdirSync(rangePath).filter(domain => {
+                const domainPath = path.join(rangePath, domain);
+                return fs.statSync(domainPath).isDirectory();
             });
 
-            if (dates.length > 1) {
-                // Ordena as datas e mantém apenas a mais recente e a que será criada
-                const sortedDates = dates.sort((a, b) => new Date(a) - new Date(b));
-                const datesToDelete = sortedDates.slice(0, -1); // Mantém a mais recente
+            // Filtra os domínios se um domínio específico for fornecido
+            const filteredDomains = domainToClean
+                ? domains.filter(domain => domain === domainToClean)
+                : domains;
 
-                datesToDelete.forEach(date => {
+            filteredDomains.forEach(domain => {
+                const domainPath = path.join(rangePath, domain);
+
+                // Obtém todas as pastas de datas dentro do domínio
+                const dates = fs.readdirSync(domainPath).filter(date => {
                     const datePath = path.join(domainPath, date);
-                    fs.rmSync(datePath, { recursive: true, force: true });
-                    console.log(`Apagado: ${datePath}`);
+                    return fs.statSync(datePath).isDirectory();
                 });
+
+                if (dates.length > 1) {
+                    // Ordena as datas e mantém apenas a mais recente
+                    const sortedDates = dates.sort((a, b) => new Date(a) - new Date(b));
+                    const datesToDelete = sortedDates.slice(0, -1); // Mantém a mais recente
+
+                    datesToDelete.forEach(date => {
+                        const datePath = path.join(domainPath, date);
+                        fs.rmSync(datePath, { recursive: true, force: true });
+                        console.log(`Apagado: ${datePath}`);
+                    });
+                }
+            });
+        } else {
+            // Caso seja um domínio diretamente no formato "resultados/<domínio>"
+            if (!domainToClean || domainToClean === entry) {
+                fs.rmSync(entryPath, { recursive: true, force: true });
+                console.log(`Domínio apagado diretamente: ${entryPath}`);
             }
-        });
+        }
     });
 }
 
@@ -172,7 +186,7 @@ async function main() {
     console.log(`${UrlsAnalisadas}/${totalUrls} URLs processadas`); 
     console.log('-----------------------------------------------');
     console.log(`Tempo total de execução: ${tempoTotal} segundos/${Math.round(tempoTotal / 60)} minuto(s)`);
-    openExplorer('C:\\Users\\renato.martins\\Lighthouse_Script\\resultados');
+    openExplorer(`${__dirname}\\resultados`);
 }
 
 function menu(){
@@ -216,7 +230,7 @@ function menu(){
                         const startTime = performance.now(); // Tempo de execução
                         runLighthouseWorker(`https://${dominio}`, dominio)
                         .then(() => {
-                            openExplorer(`C:\\Users\\renato.martins\\Lighthouse_Script\\resultados\\${dominio}\\${DATA}`);
+                            openExplorer(`${__dirname}\\resultados\\${dominio}\\${DATA}`);
                             const endTime = performance.now(); // Tempo de execução
                             const tempoTotal = Math.round((endTime - startTime) * 0.001);
                             console.log(`Tempo total de execução: ${tempoTotal} segundos`);
@@ -244,7 +258,7 @@ function menu(){
                         const startTime = performance.now(); // Tempo de execução
                         runLighthouseWorker(`https://${dominio}`, dominio)
                         .then(() => {
-                            openExplorer(`C:\\Users\\renato.martins\\Lighthouse_Script\\resultados\\${dominio}\\${DATA}`);
+                            openExplorer(`${__dirname}\\Lighthouse_Script\\resultados\\${dominio}\\${DATA}`);
                             const endTime = performance.now(); // Tempo de execução
                             const tempoTotal = Math.round((endTime - startTime) * 0.001);
                             console.log(`Tempo total de execução: ${tempoTotal} segundos`);
@@ -268,8 +282,9 @@ function menu(){
         }while(!regex.test(op));
     });    
 }
-
+console.clear();
 console.log(green);
+console.log('__dirname:', __dirname);
 console.log('Bem-vindo ao Lighthouse Script!');
 menu();
 console.log(reset);

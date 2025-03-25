@@ -17,25 +17,44 @@ function removeBase64Images(obj) {
 (async () => {
     const { url, domain, resultadosDir, data } = workerData;
     const outputDir = path.join(resultadosDir, domain, data);
-    const outputBase = path.join(outputDir, 'report');
-    const outputJson = `${outputBase}.report.json`;
+    const removeDir = path.join(resultadosDir, domain);
+    const outputDesktopBase = path.join(outputDir, 'relatorio_desktop');
+    const outputMobileBase = path.join(outputDir, 'relatorio_mobile');
+    const outputDesktopJson = `${outputDesktopBase}.report.json`;
+    const outputMobileJson = `${outputMobileBase}.report.json`;
 
     try {
         // Verifica se a pasta de resultados existe
         fs.mkdirSync(outputDir, { recursive: true });
 
-        // Corre o Lighthouse e guarda o resultado num ficheiro
-        const command = `lighthouse ${url} --quiet --preset=desktop --chrome-flags="--headless" --output=json --output=html --output-path=${outputBase}`;
-        execSync(command, { encoding: 'utf-8' });
+        // Corre o Lighthouse para desktop e guarda o resultado
+        const desktopCommand = `lighthouse ${url} --quiet --preset=desktop --chrome-flags="--headless" --output=json --output=html --output-path=${outputDesktopBase}`;
+        execSync(desktopCommand, { encoding: 'utf-8' });
 
-        const jsonData = JSON.parse(fs.readFileSync(outputJson, 'utf-8')); 
-        removeBase64Images(jsonData); // Apaga imagens base64 do ficheiro JSON
+        const desktopJsonData = JSON.parse(fs.readFileSync(outputDesktopJson, 'utf-8'));
+        removeBase64Images(desktopJsonData); // Apaga imagens base64 do ficheiro JSON
+        fs.writeFileSync(outputDesktopJson, JSON.stringify(desktopJsonData, null, 2));
 
-        fs.writeFileSync(outputJson, JSON.stringify(jsonData, null, 2));
+        // Corre o Lighthouse para mobile e guarda o resultado
+        const mobileCommand = `lighthouse ${url} --quiet --preset=experimental --chrome-flags="--headless" --output=json --output=html --output-path=${outputMobileBase}`;
+        execSync(mobileCommand, { encoding: 'utf-8' });
 
-        parentPort.postMessage({ success: true }); //Manda mensagem de sucesso
+        const mobileJsonData = JSON.parse(fs.readFileSync(outputMobileJson, 'utf-8'));
+        removeBase64Images(mobileJsonData); // Apaga imagens base64 do ficheiro JSON
+        fs.writeFileSync(outputMobileJson, JSON.stringify(mobileJsonData, null, 2));
+
+        parentPort.postMessage({ success: true }); // Manda mensagem de sucesso
     } catch (error) {
-        console.error(`Worker falhou no ${url}: ${error.message}`); // Debug log
-        parentPort.postMessage({ success: false, error: error.message }); // Manda mensagem de erro
+        const errorString = error.toString().toLowerCase().trim();
+        const SiteEmDesenvolvimento = "status code: 503";
+        const isSiteEmDesenvolvimento = Boolean(errorString.includes(SiteEmDesenvolvimento));
+
+        if (isSiteEmDesenvolvimento) {
+            fs.rmSync(removeDir, { recursive: true }); // Apaga a pasta de resultados
+            parentPort.postMessage({ success: false, error: `Status Code: 503, análise apagada` }); // Manda mensagem de erro
+            return;
+        } else {
+            parentPort.postMessage({ success: false, error: `URL errado, análise ${url} apagada` }); // Manda mensagem de erro
+        }
     }
 })();
