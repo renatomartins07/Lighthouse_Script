@@ -1,6 +1,5 @@
 const fs = require('fs');
 
-// Funcao para ler JSON
 function lerJSON(filePath) {
     if (!fs.existsSync(filePath)) {
         throw new Error(`Erro: ${filePath} não foi encontrado!`);

@@ -46,7 +46,7 @@ function runLighthouseWorker(url, domain) {
 
         worker.on('exit', (code) => {
             if (code !== 0) {
-                reject(new Error(`Worker finalizou com código ${code}`));
+                reject(new Error(`Worker finalizou com código ${code}`)); // Debug
             }
         });
     });
@@ -66,6 +66,29 @@ async function correrDominios(){
     // Filtra URLs internas
     const urls = jsonData.filter(({ InternalDomain }) => InternalDomain);
     const promises = []; 
+
+    // const rl = readline.createInterface({
+    //     input: process.stdin,
+    //     output: process.stdout
+    // });
+
+    // process.stdin.setRawMode(true);
+    // process.stdin.on('data', (key) => {
+    //     if (key.toString() === 'q') { // Press 'q' to quit
+    //         console.log('\nFinalizando o programa...');
+    //         const endTime = performance.now();
+    //         tempoTotal = Math.round((endTime - startTime) * 0.001);
+
+    //         limparRelatoriosIncompletos(); // Clean up incomplete reports
+
+    //         console.log('-----------------------------------------------');
+    //         console.log(`${UrlsAnalisadas}/${totalUrls} URLs processadas`);
+    //         console.log('-----------------------------------------------');
+    //         console.log(`Tempo total de execução: ${tempoTotal} segundos/${Math.round(tempoTotal / 60)} minuto(s)`);
+    //         process.exit(0);
+    //     }
+    // });
+
     const startTime = performance.now(); // Tempo de execução
 
     // Corre o Lighthouse para cada URL
@@ -115,6 +138,26 @@ async function correrDominios(){
     console.log(`Tempo total de execução: ${tempoTotal} segundos/${Math.round(tempoTotal / 60)} minuto(s)`);
     openExplorer(`${__dirname}\\resultados`);
     process.exit(0);
+}
+
+
+function correrDominioUnico(dominio){
+    try {
+        const startTime = performance.now(); // Tempo de execução
+        runLighthouseWorker(`https://${dominio}`, dominio)
+        .then(() => {
+            const endTime = performance.now(); // Tempo de execução
+            const tempoTotal = Math.round((endTime - startTime) * 0.001);
+            
+            ordenarPastasPorPontuacaoSeo(RESULTADOS_DIR);
+            console.log('\n--------------------------------------------------------------------------------');
+            console.log('Domínio processado com sucesso! Por favor extraia a pasta para outro local.');
+            console.log('--------------------------------------------------------------------------------');
+            console.log(`Tempo total de execução: ${tempoTotal} segundos/${Math.round(tempoTotal / 60)} minuto(s)`);
+        })
+    } catch (error) {
+        console.error(`Erro ao executar o Lighthouse para o domínio ${dominio}:`, error.message);
+    }
 }
 
 
@@ -188,23 +231,37 @@ function limpaResultadosAntigos(domainToClean = null) {
 }
 
 
-function correrDominioUnico(dominio){
-    try {
-        const startTime = performance.now(); // Tempo de execução
-        runLighthouseWorker(`https://${dominio}`, dominio)
-        .then(() => {
-            const endTime = performance.now(); // Tempo de execução
-            const tempoTotal = Math.round((endTime - startTime) * 0.001);
-            
-            ordenarPastasPorPontuacaoSeo(RESULTADOS_DIR);
-            console.log('\n--------------------------------------------------------------------------------');
-            console.log('Domínio processado com sucesso! Por favor extraia a pasta para outro local.');
-            console.log('--------------------------------------------------------------------------------');
-            console.log(`Tempo total de execução: ${tempoTotal} segundos/${Math.round(tempoTotal / 60)} minuto(s)`);
-        })
-    } catch (error) {
-        console.error(`Erro ao executar o Lighthouse para o domínio ${dominio}:`, error.message);
-    }
+function limparRelatoriosIncompletos() {
+    console.log('Limpando relatórios incompletos...');
+    const domains = fs.readdirSync(RESULTADOS_DIR).filter(domain => {
+        const domainPath = path.join(RESULTADOS_DIR, domain);
+        return fs.statSync(domainPath).isDirectory();
+    });
+
+    domains.forEach(domain => {
+        const domainPath = path.join(RESULTADOS_DIR, domain);
+        const dates = fs.readdirSync(domainPath).filter(date => {
+            const datePath = path.join(domainPath, date);
+            return fs.statSync(datePath).isDirectory();
+        });
+
+        dates.forEach(date => {
+            const datePath = path.join(domainPath, date);
+            const desktopReport = path.join(datePath, 'relatorio_desktop.report.json');
+            const mobileReport = path.join(datePath, 'relatorio_mobile.report.json');
+
+            if (!fs.existsSync(desktopReport) && !fs.existsSync(mobileReport)) {
+                fs.rmSync(datePath, { recursive: true, force: true });
+                console.log(`Relatório incompleto apagado: ${datePath}`);
+            }
+        });
+
+        // Remove the domain folder if it's empty
+        if (fs.existsSync(domainPath) && fs.readdirSync(domainPath).length === 0) {
+            fs.rmdirSync(domainPath);
+            console.log(`Pasta do domínio apagada: ${domainPath}`);
+        }
+    });
 }
 
 

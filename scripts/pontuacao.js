@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
+// Função para obter a pontuação SEO do relatório
 function obterPontuacaoSeoDoRelatorio(caminhoRelatorio) {
     try {
         const relatorio = JSON.parse(fs.readFileSync(caminhoRelatorio, 'utf-8'));
@@ -12,6 +13,7 @@ function obterPontuacaoSeoDoRelatorio(caminhoRelatorio) {
     }
 }
 
+// Função para obter a faixa de pontuação SEO
 function obterFaixaPontuacao(pontuacao) {
     if (pontuacao <= 39) return '0-39';
     if (pontuacao <= 59) return '40-59';
@@ -19,6 +21,7 @@ function obterFaixaPontuacao(pontuacao) {
     return '90-100';
 }
 
+// Função para organizar as pastas de resultados por pontuação SEO
 function ordenarPastasPorPontuacaoSeo(RESULTADOS_DIR) {
     console.log(`RESULTADOS_DIR: ${RESULTADOS_DIR}`);
 

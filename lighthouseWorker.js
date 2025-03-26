@@ -16,8 +16,8 @@ function removeBase64Images(obj) {
 
 (async () => {
     const { url, domain, resultadosDir, data } = workerData;
-    const outputDir = path.join(resultadosDir, domain, data);
-    const removeDir = path.join(resultadosDir, domain);
+    const outputDir = path.join(resultadosDir, domain, data); // Caminho para a pasta de resultados
+    const removeDir = path.join(resultadosDir, domain); // Caminho para a pasta de resultados a remover
     const outputDesktopBase = path.join(outputDir, 'relatorio_desktop');
     const outputMobileBase = path.join(outputDir, 'relatorio_mobile');
     const outputDesktopJson = `${outputDesktopBase}.report.json`;
@@ -45,9 +45,9 @@ function removeBase64Images(obj) {
 
         parentPort.postMessage({ success: true }); // Manda mensagem de sucesso
     } catch (error) {
-        const errorString = error.toString().toLowerCase().trim();
+        const errorString = error.toString().toLowerCase().trim(); // Converte a mensagem de erro para minúsculas e remove espaços
         const SiteEmDesenvolvimento = "status code: 503";
-        const isSiteEmDesenvolvimento = Boolean(errorString.includes(SiteEmDesenvolvimento));
+        const isSiteEmDesenvolvimento = Boolean(errorString.includes(SiteEmDesenvolvimento)); // Verifica se a mensagem de erro contém "status code: 503"
 
         if (isSiteEmDesenvolvimento) {
             fs.rmSync(removeDir, { recursive: true }); // Apaga a pasta de resultados
