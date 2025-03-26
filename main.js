@@ -114,6 +114,7 @@ async function correrDominios(){
     console.log('-----------------------------------------------');
     console.log(`Tempo total de execução: ${tempoTotal} segundos/${Math.round(tempoTotal / 60)} minuto(s)`);
     openExplorer(`${__dirname}\\resultados`);
+    process.exit(0);
 }
 
 
@@ -192,10 +193,10 @@ function correrDominioUnico(dominio){
         const startTime = performance.now(); // Tempo de execução
         runLighthouseWorker(`https://${dominio}`, dominio)
         .then(() => {
-            openExplorer(`${__dirname}\\resultados\\${dominio}\\${DATA}`);
             const endTime = performance.now(); // Tempo de execução
             const tempoTotal = Math.round((endTime - startTime) * 0.001);
             
+            ordenarPastasPorPontuacaoSeo(RESULTADOS_DIR);
             console.log('\n--------------------------------------------------------------------------------');
             console.log('Domínio processado com sucesso! Por favor extraia a pasta para outro local.');
             console.log('--------------------------------------------------------------------------------');
@@ -261,6 +262,7 @@ function menu(){
     
             if(op === '4'){
                 rl.close();
+                console.log('A sair...');
                 process.exit(0);
             }
     
