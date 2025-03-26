@@ -20,6 +20,7 @@
   "homepage": "https://github.com/renatomartins07/Lighthouse_Script#readme",
   "dependencies": {
     "explorer-opener": "^1.0.1",
-    "lighthouse": "^12.4.0"
+    "lighthouse": "^12.4.0",
+    "node-windows": "^1.0.0-beta.8"
   }
 }
