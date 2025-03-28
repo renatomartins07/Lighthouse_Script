@@ -14,6 +14,21 @@ function removeBase64Images(obj) {
     }
 }
 
+function getUserPath() {
+    var currentPath = __dirname; // Example: "C:\\Users\\renato.martins\\AppData"
+    var parts = currentPath.split(path.sep); // Split path into parts
+
+    var userIndex = parts.indexOf("Users"); // Find "Users" directory
+
+    if (userIndex !== -1 && userIndex + 1 < parts.length) {
+        // Extract path up to "Users\username\"
+        var desiredPath = parts.slice(0, userIndex + 2).join(path.sep) + path.sep;
+        return desiredPath;
+    } else {
+        return "Users folder not found in path";
+    }
+}
+
 (async () => {
     const { url, domain, resultadosDir, data } = workerData;
     const outputDir = path.join(resultadosDir, domain, data); // Caminho para a pasta de resultados
@@ -23,12 +38,14 @@ function removeBase64Images(obj) {
     const outputDesktopJson = `${outputDesktopBase}.report.json`;
     const outputMobileJson = `${outputMobileBase}.report.json`;
 
+    var UserPath = await getUserPath();
+
     try {
         // Verifica se a pasta de resultados existe
         fs.mkdirSync(outputDir, { recursive: true });
 
         // Corre o Lighthouse para desktop e guarda o resultado
-        const desktopCommand = `lighthouse ${url} --quiet --preset=desktop --chrome-flags="--headless" --output=json --output=html --output-path=${outputDesktopBase}`;
+        const desktopCommand = `${UserPath}\AppData\\Roaming\\npm\\lighthouse ${url} --quiet --disable-storage-reset --preset=desktop --chrome-flags="--headless" --output=json --output=html --output-path=${outputDesktopBase}`;
         execSync(desktopCommand, { encoding: 'utf-8' });
 
         const desktopJsonData = JSON.parse(fs.readFileSync(outputDesktopJson, 'utf-8'));
@@ -36,7 +53,7 @@ function removeBase64Images(obj) {
         fs.writeFileSync(outputDesktopJson, JSON.stringify(desktopJsonData, null, 2));
 
         // Corre o Lighthouse para mobile e guarda o resultado
-        const mobileCommand = `lighthouse ${url} --quiet --preset=experimental --chrome-flags="--headless" --output=json --output=html --output-path=${outputMobileBase}`;
+        const mobileCommand = `${UserPath}\AppData\\Roaming\\npm\\lighthouse ${url} --quiet --disable-storage-reset --preset=experimental --chrome-flags="--headless" --output=json --output=html --output-path=${outputMobileBase}`;
         execSync(mobileCommand, { encoding: 'utf-8' });
 
         const mobileJsonData = JSON.parse(fs.readFileSync(outputMobileJson, 'utf-8'));
@@ -45,7 +62,7 @@ function removeBase64Images(obj) {
 
         parentPort.postMessage({ success: true }); // Manda mensagem de sucesso
     } catch (error) {
-        const errorString = error.toString().toLowerCase().trim(); // Converte a mensagem de erro para minúsculas e remove espaços
+        const errorString = error.toString().toLowerCase().trim();
         const SiteEmDesenvolvimento = "status code: 503";
         const isSiteEmDesenvolvimento = Boolean(errorString.includes(SiteEmDesenvolvimento)); // Verifica se a mensagem de erro contém "status code: 503"
 
@@ -54,7 +71,11 @@ function removeBase64Images(obj) {
             parentPort.postMessage({ success: false, error: `Status Code: 503, análise apagada` }); // Manda mensagem de erro
             return;
         } else {
+            fs.rmSync(removeDir, {recursive: true});
             parentPort.postMessage({ success: false, error: `URL errado, análise ${url} apagada` }); // Manda mensagem de erro
         }
-    }
+    
+        // Em vez de apagar a pasta, apenas registra o erro e continua
+        parentPort.postMessage({ success: false, error: error.message });
+    }    
 })();

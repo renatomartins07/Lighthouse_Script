@@ -13,11 +13,11 @@ const { buscaDominioID, buscaDominioURL } = require('./scripts/buscaDominio');
 const { ordenarPastasPorPontuacaoSeo } = require('./scripts/pontuacao');
 
 // Configuração
-const FICHEIRO_JSON = 'ActiveWebsitesList.json';
+const FICHEIRO_JSON = __dirname + '/ActiveWebsitesList.json';
 exports.FICHEIRO_JSON = FICHEIRO_JSON; // Exporta o ficheiro JSON para ser usado em outros ficheiros
 const RESULTADOS_DIR = 'resultados';
 const DATA = new Date().toISOString().replace('T', '-').replace(/:/g, '-').split('.')[0]; // Formato: YYYY-MM-DD-HH-mm-ss
-const CONCURRENCY_LIMIT = 5; // Corre 5 URLs em simultâneo
+const CONCURRENCY_LIMIT = 4; // Corre 5 URLs em simultâneo
 
 
 // Funcao para correr o Lighthouse
@@ -27,15 +27,17 @@ function runLighthouseWorker(url, domain) {
         console.log('Caso queira parar a execução, pressione CTRL + C'); 
 
         // Cria um novo worker
-        const worker = new Worker('./lighthouseWorker.js', {
+        const worker = new Worker(__dirname + '/lighthouseWorker.js', {
             workerData: { url, domain, resultadosDir: RESULTADOS_DIR, data: DATA }, // Passa os dados para o worker
         });
 
         worker.on('message', (message) => {
             if (message.success) {
+                console.log("AAAAAAAAAAAAAAAAAA");
                 resolve(message);
             } else {
-                reject(new Error(`Erro no domínio ${domain}: ${message.error}`));
+                reject(new Error(`Erro no domínio ${domain}: ${message.error} ASDASASASD`));
+                resolve(message);
             }
         });
 
@@ -58,8 +60,10 @@ async function correrDominios(){
     let totalUrls = 0;
     let tempoTotal = 0;
     const errors = [];
-    
+
+    console.log('A procurar URLs internas...');
     const jsonData = carregarJSONData(FICHEIRO_JSON); // Carrega o JSON
+    console.log('URLs internas encontradas!');
     totalUrls = jsonData.filter(item => item.InternalDomain).length; // Conta o número de URLs
     if (!jsonData) return; // Sai se não conseguir carregar o JSON
 
